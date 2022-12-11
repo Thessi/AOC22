@@ -1,19 +1,22 @@
 package day11
 
-data class Monkey(val operation: (Int) -> Int,
-                  val test: (Int) -> Int,
-                  val items: ArrayDeque<Int> = ArrayDeque(),
-                  var inspectCount: Int = 0) {
-    fun inspectFirstItem(): Int? {
+data class Monkey(
+    val operation: (Map<Int, Long>) -> Map<Int, Long>,
+    val testValue: Int,
+    val testTrueMonkey: Int,
+    val testFalseMonkey: Int,
+    val items: ArrayDeque<Map<Int, Long>> = ArrayDeque(),
+    var inspectCount: Long = 0
+) {
+    fun inspectFirstItem(): Map<Int, Long>? {
         if (items.isEmpty()) {
             return null
         }
         inspectCount++
-        val item = items.removeFirst()
-        return Math.floorDiv(operation(item), 3)
+        return operation(items.removeFirst())
     }
 
-    fun getTargetMonkey(itemWorry: Int): Int {
-        return test(itemWorry)
+    fun getTargetMonkey(itemWorry: Map<Int, Long>): Int {
+        return if (itemWorry[testValue] == 0L) testTrueMonkey else testFalseMonkey
     }
 }

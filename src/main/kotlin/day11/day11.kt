@@ -14,8 +14,8 @@ fun main() {
     println(playAffnRazn(monkeys))
 }
 
-fun playAffnRazn(monkeys: ArrayList<Monkey>): Int {
-    for (i in 0 until 20) {
+fun playAffnRazn(monkeys: ArrayList<Monkey>): Long {
+    for (i in 0 until 10000) {
         for (monkey in monkeys) {
             while (monkey.items.isNotEmpty()) {
                 val itemWorry = monkey.inspectFirstItem() ?: continue
@@ -31,36 +31,53 @@ fun playAffnRazn(monkeys: ArrayList<Monkey>): Int {
 }
 
 fun parseMonkeys(input: List<String>): ArrayList<Monkey> {
+    val testDivisors = input.filter { it.startsWith("  Test:") }
+        .map { it.split(" ").last().toInt() }
+
     return input.filter { it.isNotEmpty() && !it.startsWith("Monkey") }
         .chunked(5)
-        .map { mapToMonkey(it) } as ArrayList<Monkey>
+        .map { mapToMonkey(it, testDivisors) } as ArrayList<Monkey>
 }
 
-private fun mapToMonkey(input: List<String>): Monkey {
-    val items = input[0].substring(18)
+private fun mapToMonkey(input: List<String>, testDivisors: List<Int>): Monkey {
+    val itemWorries = input[0].substring(18)
         .split(", ")
-        .map { it.toInt() }
+        .map { it.toLong() }
+
+    val items = itemWorries
+        .map { worry ->
+            testDivisors.map { it to worry % it }
+                .associate { it }
+        }
+
 
     val operationParts = input[1].substring(19).split(" ")
 
-    val operation = fun(value: Int): Int {
-        val operand1 = if (operationParts[0] == "old") value else operationParts[0].toInt()
-        val operand2 = if (operationParts[2] == "old") value else operationParts[2].toInt()
+    val operation = fun(divisorRemainders: Map<Int, Long>): Map<Int, Long> {
+        val newDivisorRemainders = divisorRemainders as HashMap
+        for (key in newDivisorRemainders.keys) {
+            if (!newDivisorRemainders.containsKey(key)) {
+                continue
+            }
+            val value = newDivisorRemainders[key]
+            val operand1 = if (operationParts[0] == "old") value!! else operationParts[0].toLong()
+            val operand2 = if (operationParts[2] == "old") value!! else operationParts[2].toLong()
 
-        when (operationParts[1]) {
-            "+" -> return operand1 + operand2
-            "-" -> return operand1 - operand2
-            "*" -> return operand1 * operand2
-            "/" -> return operand1 / operand2
+            var operationResult = 0L
+            when (operationParts[1]) {
+                "+" -> operationResult = operand1.plus(operand2)
+                "*" -> operationResult = operand1.times(operand2)
+            }
+
+            newDivisorRemainders[key] = operationResult % key
         }
-        return 0
+
+        return newDivisorRemainders
     }
 
     val testDivisor = input[2].split(" ").last().toInt()
     val testTrueMonkey = input[3].split(" ").last().toInt()
     val testFalseMonkey = input[4].split(" ").last().toInt()
 
-    val test = {value: Int -> if (value % testDivisor == 0) testTrueMonkey else testFalseMonkey }
-
-    return Monkey(operation, test, ArrayDeque(items))
+    return Monkey(operation, testDivisor, testTrueMonkey, testFalseMonkey, ArrayDeque(items))
 }
