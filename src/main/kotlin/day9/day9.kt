@@ -16,27 +16,26 @@ fun main() {
 private fun getVisitedTailPositionCount(input: List<String>): Int {
     val visitedPositions = hashSetOf("0/0") // Just save coordinates as "x/y" cause idc
 
-    var headX = 0
-    var headY = 0
-    var tailX = 0
-    var tailY = 0
+    val knots = Array(10) { _ -> Pair(0, 0)}
 
     for (move in input) {
         val (direction, steps) = parseMove(move)
 
         for (i in 0 until steps) {
             // Apparently you can't destructure into already declared variables, the more you know..
-            val (newHeadX, newHeadY) = getNewHeadPosition(headX, headY, direction)
-            headX = newHeadX
-            headY = newHeadY
+            val (newHeadX, newHeadY) = getNewHeadPosition(knots[0].first, knots[0].second, direction)
+            knots[0] = Pair(newHeadX, newHeadY)
 
-            val (newTailX, newTailY) = getNewTailPosition(tailX, tailY, headX, headY)
-            tailX = newTailX
-            tailY = newTailY
+            for (knotIndex in 1 until knots.size) {
+                val knot = knots[knotIndex]
+                val currentHead = knots[knotIndex - 1]
+                val (newTailX, newTailY) = getNewTailPosition(knot.first, knot.second, currentHead.first, currentHead.second)
+                knots[knotIndex] = Pair(newTailX, newTailY)
+            }
 
-            println("$headX/$headY -> $tailX/$tailY")
-            visitedPositions.add("$tailX/$tailY")
+            visitedPositions.add("" + knots[9].first + "/" + knots[9].second)
         }
+
     }
 
     return visitedPositions.size
