@@ -9,36 +9,38 @@ fun main() {
         return
     }
 
-    println(calcSignalStrengthSum(inputLines))
+    println(getScreenOutput(inputLines))
 }
 
-private fun calcSignalStrengthSum(input: List<String>): Int {
-    var signalStrengthSum = 0
+private fun getScreenOutput(input: List<String>): String {
     var currSignalStrength = 1
-    var currCycle = 1
+    var currCycle = 0
+
+    val screen = Array(240) { _ -> "."}
 
     for (command in input) {
+        screen[currCycle] = getScreenSymbol(currCycle, currSignalStrength)
+
         val prevSignalStrength = currSignalStrength
         val commandParts = command.split(" ")
         when (commandParts[0]) {
             "noop" -> currCycle++
             "addx" -> {
+                screen[currCycle + 1] = getScreenSymbol(currCycle + 1, prevSignalStrength)
                 currCycle += 2
                 currSignalStrength += commandParts[1].toInt()
             }
         }
-
-        // Command finished on milestone cycle -> take new value
-        if (currCycle <= 221 && (currCycle - 20) % 40 == 0) {
-            signalStrengthSum += currSignalStrength * currCycle
-        }
-
-        // Command finished after milestone cycle -> take prev value
-        // If command was "noop", signal was already counted on prev cycle -> skip
-        if (currCycle <= 221 && (currCycle - 20) % 40 == 1 && commandParts[0] != "noop") {
-            signalStrengthSum += prevSignalStrength * (currCycle - 1)
-        }
     }
 
-    return signalStrengthSum
+    return screen.toList()
+        .chunked(40)
+        .joinToString("\n") { it.joinToString("") }
+}
+
+fun getScreenSymbol(cycle: Int, signalStrength: Int): String {
+    if ((cycle % 40) in (signalStrength - 1)..(signalStrength + 1)) {
+        return "#"
+    }
+    return "."
 }
