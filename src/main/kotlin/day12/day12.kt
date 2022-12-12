@@ -10,24 +10,39 @@ fun main() {
         return
     }
 
-    val startPoints = parseElevations(inputLines)
-
-    println(doTheDjikstra(startPoints, inputLines))
+    println(
+        getStartPointMarkedInputs(inputLines)
+            .map { parseElevations(it) }
+            .map { doTheDjikstra(it) }
+            .filter { it > 0 }
+            .min()
+    )
 }
 
-fun doTheDjikstra(startPoint: ElevationPoint, inputLines: List<String>): Int {
+private fun getStartPointMarkedInputs(input: List<String>): List<List<String>> {
+    (input as ArrayList).forEachIndexed { i, row -> input[i] = row.replace('S', 'a') }
+    val maps = ArrayList<ArrayList<String>>()
+    input.forEachIndexed { rowNumber, row ->
+        row.forEachIndexed { colNumber, point ->
+            if (point == 'a') {
+                val listCopy = ArrayList(input)
+                listCopy[rowNumber] = listCopy[rowNumber].substring(0, colNumber) + 'S' + listCopy[rowNumber].substring(colNumber + 1)
+                maps.add(listCopy)
+            }
+        }
+    }
+
+    return maps
+}
+
+fun doTheDjikstra(startPoint: ElevationPoint): Int {
     val nodesToProcess = ArrayDeque<ElevationPoint>()
     nodesToProcess.add(startPoint)
-
-    val map = inputLines.map { it.toList() as ArrayList<Char> }
 
     while (nodesToProcess.isNotEmpty()) {
 
         val currNode = nodesToProcess.removeFirst()
         currNode.visited = true
-
-        val location = currNode.location.split("/")
-        map[location[0].toInt()][location[1].toInt()] = '.'
 
         currNode.neighbors.forEach {
             it.distance = min(it.distance, currNode.distance + 1)
@@ -41,7 +56,6 @@ fun doTheDjikstra(startPoint: ElevationPoint, inputLines: List<String>): Int {
         }
     }
 
-    println("End not found")
     return 0
 }
 
